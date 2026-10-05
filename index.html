@@ -67,7 +67,7 @@ button,input{font:inherit}button{border:0;color:inherit;cursor:pointer}
   <section class="app" id="messages"><div class="appbar"><button class="back">‹</button><h2>Messages</h2><span>✎</span></div><div class="appbody"><div id="messageList" class="messages"></div></div><div class="compose"><input id="messageInput" placeholder="Message…"><button class="send" id="sendMessage">Envoyer</button></div></section>
   <section class="app" id="photos"><div class="appbar"><button class="back">‹</button><h2>Photos</h2><label class="primary">＋ <input id="photoInput" type="file" accept="image/*" multiple hidden></label></div><div class="appbody"><div id="gallery" class="gallery"></div><div id="galleryEmpty" class="empty">Aucune image. Ajoute une photo pour commencer.</div></div></section>
   <section class="app" id="phoneApp"><div class="appbar"><button class="back">‹</button><h2>Téléphone</h2><span>⌕</span></div><div class="appbody"><div class="cards"><div class="row"><div class="avatar">☎</div><div class="grow"><b>Clavier</b><div class="muted">Appels utilisateur</div></div></div><div class="row"><div class="avatar">★</div><div class="grow"><b>Favoris</b><div class="muted">Aucun favori</div></div></div></div></div></section>
-  <section class="app" id="contacts"><div class="appbar"><button class="back">‹</button><h2>Contacts</h2><span>＋</span></div><div class="appbody"><div class="empty">Les contacts de ton compte apparaîtront ici.</div></div></section>
+  <section class="app" id="contacts"><div class="appbar"><button class="back">‹</button><h2>Contacts</h2><span>＋</span></div><div class="appbody"><div id="contactList" class="list"><div class="empty">Aucun contact synchronisé.</div></div></div></section>
   <section class="app" id="notifications"><div class="appbar"><button class="back">‹</button><h2>Notifications</h2><span>✓</span></div><div class="appbody"><div id="notificationList" class="list"></div></div></section>
   <section class="app" id="settings"><div class="appbar"><button class="back">‹</button><h2>Réglages</h2><span>⚙</span></div><div class="appbody"><div class="list"><div class="setting"><span>Compte</span><span id="accountName" class="pill">Utilisateur</span></div><div class="setting"><span>Numéro</span><span id="accountNumber" class="muted">Non synchronisé</span></div><div class="setting"><span>Version du mod</span><span class="muted">0.2.0</span></div><div class="setting"><span>Synchronisation</span><span id="settingsSync" class="pill">Local</span></div><button class="primary" id="requestSync">Synchroniser maintenant</button></div></div></section>
 <section class="app" id="genericApp"><div class="appbar"><button class="back">‹</button><h2 id="genericTitle">App</h2><span>•••</span></div><div class="appbody"><div id="genericBody" class="empty">Données fournies par le site lorsqu'une synchronisation est disponible.</div></div></section>
@@ -98,67 +98,67 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":
 $("#sendMessage").onclick=()=>{const v=$("#messageInput").value.trim();if(!v)return;state.messages.push({sender:"Moi",text:v,me:true,at:Date.now()});$("#messageInput").value="";save();renderMessages()};
 $("#photoInput").onchange=async e=>{for(const f of e.target.files){if(!f.type.startsWith("image/"))continue;const url=await fileData(f);state.photos.unshift(url);state.messages.push({sender:"Moi",image:url,me:true,at:Date.now()})}save();renderPhotos();renderMessages();toast("Photo ajoutée")};
 function fileData(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})}
-function incoming(sender,text,image){const m={sender,text,image,me:false,at:Date.now()};state.messages.push(m);if(image)state.photos.unshift(image);state.notifications.unshift({title:"Nouveau message",body:image?"Image reçue de "+sender:sender+" : "+text});save();
+function renderHomeSync(){
+  const s=$("#syncState"); if(s){s.textContent=state.sync?.mode==="live"?"● Synchronisé":state.sync?.mode==="bridge"?"● Site connecté":"Hors ligne";}
+  if($("#accountName"))$("#accountName").textContent=state.me?.name||"Utilisateur";
+  if($("#accountNumber"))$("#accountNumber").textContent=state.me?.number||"Non synchronisé";
+}
+function renderContacts(){
+  const box=$("#contactList"); if(!box)return;
+  const contacts=Array.isArray(state.contacts)?state.contacts:[];
+  box.innerHTML=contacts.length?contacts.map(c=>'<div class="row"><div class="avatar">'+escapeHtml((c.name||"?").slice(0,1).toUpperCase())+'</div><div class="grow"><b>'+escapeHtml(c.name||"Contact")+'</b><div class="muted">'+escapeHtml(c.number||"")+'</div></div></div>').join(""):'<div class="empty">Aucun contact synchronisé.</div>';
+}
+function incoming(sender,text,image){const m={sender,text,image,me:false,at:Date.now()};state.messages.push(m);if(image)state.photos.unshift(image);state.notifications.unshift({title:"Nouveau message",body:image?"Image reçue de "+sender:sender+" : "+text});save();renderMessages();renderPhotos();renderNotifications();toast("Nouveau message reçu")}
 /* ================= MOD BRIDGE =================
-   Le site reste l'autorité des données.
-   Le mod peut être chargé dans la page officielle (window.SP/window.gmod)
-   ou dans une iframe/fenêtre (postMessage). */
+   Le site reste l'autorité des données. Le mod observe SP et utilise gmod
+   pour les actions utilisateur, avec postMessage en secours pour une iframe. */
 function modSyncStatus(mode,name,number){
-  const s=$("#syncState"), ss=$("#settingsSync");
-  if(s){s.textContent=mode==="live"?"● Synchronisé":mode==="bridge"?"● Site connecté":"Hors ligne";s.style.background=mode==="offline"?"#35d07f22":"#35d07f22";s.style.color=mode==="offline"?"#6ff1a7":"#6ff1a7";}
+  state.sync={mode,last:Date.now()};
+  const s=$("#syncState"),ss=$("#settingsSync");
+  if(s)s.textContent=mode==="live"?"● Synchronisé":mode==="bridge"?"● Site connecté":"Hors ligne";
   if(ss)ss.textContent=mode==="live"?"Temps réel":mode==="bridge"?"Bridge actif":"Local";
-  if(name)$("#accountName").textContent=name;
-  if(number)$("#accountNumber").textContent=number;
+  if($("#accountName"))$("#accountName").textContent=name||"Utilisateur";
+  if($("#accountNumber"))$("#accountNumber").textContent=number||"Non synchronisé";
+  save();
 }
 function modApplySync(d){
   if(!d||typeof d!=="object")return;
   if(d.number)state.me={...(state.me||{}),number:d.number};
   if(d.me)state.me=d.me;
   if(Array.isArray(d.contacts))state.contacts=d.contacts;
-  if(d.convs&&typeof d.convs==="object"&&d.convs.list)state.convs=d.convs.list;
+  if(d.convs&&typeof d.convs==="object"&&d.convs.list)state.messages=Object.values(d.convs.list).flat();
   if(d.names)state.names=d.names;
-  state.sync={mode:"live",last:Date.now()};save();
   modSyncStatus("live",state.me?.name,state.me?.number);
-  renderMessages();renderContacts();renderNotifications();renderPhotos();renderHome();
+  renderMessages();renderContacts();renderNotifications();renderPhotos();renderHomeSync();
 }
 function modAction(action,data){
-  try{
-    if(window.gmod){
-      if(action==="SendSMS"&&gmod.SendSMS)gmod.SendSMS(data.number,data.text);
-      if(action==="Call"&&gmod.Call)gmod.Call(data.number);
-      if(action==="AddContact"&&gmod.AddContact)gmod.AddContact(data.number,data.name);
-      if(action==="Sync"&&gmod.Sync)gmod.Sync();
-    }
-  }catch(e){}
-  try{window.parent&&window.parent!==window&&window.parent.postMessage({source:"sunsetphone-mod",type:"phone-action",action,data},"*")}catch(e){}
+  try{if(window.gmod){if(action==="SendSMS"&&gmod.SendSMS)gmod.SendSMS(data.number,data.text);else if(action==="Call"&&gmod.Call)gmod.Call(data.number);else if(action==="AddContact"&&gmod.AddContact)gmod.AddContact(data.number,data.name);else if(action==="Sync"&&gmod.Sync)gmod.Sync();}}catch(e){}
+  try{if(window.parent&&window.parent!==window)window.parent.postMessage({source:"sunsetphone-mod",type:"phone-action",action,data},"*")}catch(e){}
 }
 function installModBridge(){
-  if(window.SP&& !window.__SUNSETPHONE_MOD_HOOKED){
+  if(window.SP&&!window.__SUNSETPHONE_MOD_HOOKED){
     window.__SUNSETPHONE_MOD_HOOKED=true;
     const wrap=(name,fn)=>{if(typeof SP[name]!=="function")return;const old=SP[name];SP[name]=function(d){try{fn(d)}catch(e){}return old.apply(this,arguments)}};
-    wrap("init",d=>{state.sync={mode:"live",last:Date.now()};if(d?.me)state.me=d.me;save();modSyncStatus("live",state.me?.name,state.me?.number)});
+    wrap("init",d=>{if(d?.me)state.me=d.me;modSyncStatus("live",state.me?.name,state.me?.number)});
     wrap("sync",d=>modApplySync(d));
-    wrap("contacts",d=>{if(d?.contacts){state.contacts=d.contacts;save();renderContacts()}});
-    wrap("sms",d=>{if(!d?.msg)return;const m=d.msg,n=d.other||m.from;if(!state.convs[n])state.convs[n]=[];if(!state.convs[n].some(x=>x.time===m.time&&x.from===m.from&&x.text===m.text))state.convs[n].push(m);if(m.from!==state.me?.number){state.notifications.unshift({title:n,body:m.text||"Nouveau message",time:Date.now()});}state.sync={mode:"live",last:Date.now()};save();renderMessages();renderNotifications();renderHome();});
+    wrap("contacts",d=>{if(d?.contacts){state.contacts=d.contacts;modSyncStatus("live",state.me?.name,state.me?.number);renderContacts()}});
+    wrap("sms",d=>{if(!d?.msg)return;const m=d.msg;state.messages.push({sender:m.from,text:m.text,image:m.image,me:m.from===state.me?.number,at:(m.time||Date.now()/1000)*1000});state.sync={mode:"live",last:Date.now()};save();renderMessages();renderNotifications();renderHomeSync()});
     wrap("photos",d=>{if(Array.isArray(d?.list)){state.photos=d.list;save();renderPhotos()}});
-    wrap("photo",d=>{if(d?.photo&&!state.photos.some(x=>x.id===d.photo.id)){state.photos.unshift(d.photo);save();renderPhotos()}});
-    wrap("card",d=>{if(d?.card){state.me={...state.me,name:d.card.name||state.me?.name,number:d.card.number||state.me?.number};save();modSyncStatus("live",state.me.name,state.me.number);}});
+    wrap("photo",d=>{if(d?.photo){state.photos.unshift(d.photo);save();renderPhotos()}});
+    wrap("card",d=>{if(d?.card){state.me={...(state.me||{}),name:d.card.name||state.me?.name,number:d.card.number||state.me?.number};modSyncStatus("live",state.me.name,state.me.number)}});
     modSyncStatus("bridge",state.me?.name,state.me?.number);
   }
 }
 window.SunsetPhoneMod={version:"0.2.0",applySync:modApplySync,founder:(on)=>$("#founder").classList.toggle("open",!!on)};
-window.addEventListener("message",e=>{const d=e.data;if(!d||d.source!=="sunsetgames")return;if(d.type==="phone-sync"||d.type==="sync")modApplySync(d.payload||d.data||{});if(d.type==="phone-message")incoming(d.message||d.payload);if(d.type==="phone-photo"&&d.photo){state.photos.unshift(d.photo);save();renderPhotos()}if(d.type==="founder-mode")$("#founder").classList.toggle("open",!!d.enabled)});
-function incoming(m){if(!m)return;const n=m.from||m.number||"contact";if(!state.convs[n])state.convs[n]=[];state.convs[n].push({from:n,to:state.me?.number,text:m.text||"",image:m.image,time:m.time||Date.now()/1000});state.notifications.unshift({title:n,body:m.image?"Photo reçue":"Nouveau message : "+(m.text||""),time:Date.now()});save();renderMessages();renderNotifications();renderHome();toast("Nouveau message reçu")}
+window.addEventListener("message",e=>{const d=e.data;if(!d||d.source!=="sunsetgames")return;if(d.type==="phone-sync"||d.type==="sync")modApplySync(d.payload||d.data||{});if(d.type==="phone-message")incoming((d.message||d.payload)?.from||"Site",(d.message||d.payload)?.text||"",(d.message||d.payload)?.image);if(d.type==="phone-photo"&&d.photo){state.photos.unshift(d.photo);save();renderPhotos()}if(d.type==="founder-mode")$("#founder").classList.toggle("open",!!d.enabled)});
 $("#requestSync").onclick=()=>{modAction("Sync",{reason:"user"});try{window.parent?.postMessage({source:"sunsetphone-mod",type:"phone-sync-request"},"*")}catch(e){}toast("Synchronisation demandée")};
 installModBridge();
-
-renderMessages();renderPhotos();renderNotifications();toast("Nouveau message reçu");}
 $("#injectMessage").onclick=()=>{const sender=$("#testSender").value.trim()||"Founder";const text=$("#testText").value.trim();if(!text)return;incoming(sender,text,null);$("#testText").value=""};
 $("#injectImage").onclick=async()=>{const f=$("#testImage").files[0];if(!f)return;incoming($("#testSender").value.trim()||"Founder","",await fileData(f));$("#testImage").value=""};
 $("#closeFounder").onclick=()=>$("#founder").classList.remove("open");
 window.addEventListener("hashchange",()=>{$("#founder").classList.toggle("open",location.hash==="#founder-test")});
 $("#founder").classList.toggle("open",location.hash==="#founder-test");
-renderMessages();renderPhotos();renderNotifications();
+renderMessages();renderPhotos();renderNotifications();renderContacts();renderHomeSync();
 </script>
 </body>
 </html>
