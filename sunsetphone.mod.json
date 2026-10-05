@@ -1,7 +1,7 @@
 {
   "id": "sunsetphone-user-mod",
   "name": "SunsetPhone Mod",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "user-overlay",
   "entry": "index.html",
   "founderTest": {
@@ -13,11 +13,13 @@
     "messages",
     "image-upload",
     "image-receive-test",
+    "site-bridge",
+    "realtime-sync",
     "gallery",
     "notifications"
   ],
   "storage": {
     "mode": "browser-test",
-    "backend": "ready-for-realtime"
+    "backend": "site-bridge-ready"
   }
 }
