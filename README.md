@@ -39,3 +39,16 @@ La couche actuelle utilise le stockage navigateur uniquement pour permettre un t
 Ouvre `index.html`, déverrouille le téléphone, puis teste Messages et Photos.
 
 Pour le test fondateur, utilise `#founder-test`.
+
+
+## Synchronisation site ↔ mod
+
+Le téléphone est une surcouche utilisateur non officielle : le site reste l'autorité des données.
+
+Le mod 0.2.0 peut observer le bridge `window.SP`, utiliser `window.gmod` pour les actions (SMS, appels, synchronisation), et utiliser `postMessage` lorsqu'il est chargé comme iframe/fenêtre. Les changements de compte, contacts, conversations et photos peuvent ainsi être répercutés dans le mod.
+
+Le Founder Test reste séparé du téléphone utilisateur et peut être piloté par le bridge du fondateur.
+
+### Bridge
+- Site → mod : `source: "sunsetgames"`, types `phone-sync`, `phone-message`, `phone-photo`, `founder-mode`.
+- Mod → site : `source: "sunsetphone-mod"`, types `phone-action`, `phone-sync-request`.
