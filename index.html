@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SunsetPhone Mod</title>
+<meta name="theme-color" content="#050507">
+<style>
+:root{--bg:#050507;--card:#111116;--card2:#18181f;--text:#f7f7fa;--muted:#8d8d98;--line:#272730;--accent:#ff5f57;--blue:#4f8cff;--green:#35d07f;--shadow:0 30px 80px #0008}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#020203;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{display:grid;place-items:center;overflow:hidden}
+button,input{font:inherit}button{border:0;color:inherit;cursor:pointer}
+.phone{position:relative;width:min(430px,100vw);height:min(900px,100vh);background:#050507;border:8px solid #16161a;border-radius:48px;box-shadow:0 0 0 2px #303039,var(--shadow);overflow:hidden}
+.screen{position:absolute;inset:0;background:linear-gradient(145deg,#0c0c11,#030305 65%);overflow:hidden}
+.wall{position:absolute;inset:0;background:radial-gradient(circle at 20% 15%,#4b1b44 0,#171027 28%,transparent 52%),radial-gradient(circle at 90% 85%,#112c50 0,#080b14 38%,#030305 72%);filter:saturate(1.15)}
+.island{position:absolute;z-index:30;top:9px;left:50%;transform:translateX(-50%);width:112px;height:30px;border-radius:22px;background:#000;box-shadow:0 2px 5px #0008}
+.status{position:absolute;z-index:25;top:12px;left:20px;right:20px;display:flex;justify-content:space-between;font-size:13px;font-weight:700;pointer-events:none}.status .right{display:flex;gap:7px}
+.lock{position:absolute;z-index:20;inset:0;display:grid;place-items:center;padding-top:75px;text-align:center;background:linear-gradient(#0001,#0007)}
+.lock.hidden{display:none}.time{font-size:76px;line-height:.9;font-weight:300;letter-spacing:-5px}.date{margin-top:10px;color:#ddd;font-size:15px}
+.unlock{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);width:52px;height:5px;background:#fff;border-radius:5px;opacity:.9}
+.home{position:absolute;inset:0;padding:72px 18px 30px;display:flex;flex-direction:column;z-index:5}
+.home.hidden{display:none}.greeting{font-size:14px;color:#ddd;margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:19px 14px}
+.icon{display:flex;flex-direction:column;align-items:center;gap:6px;background:none}.icon .pic{width:62px;height:62px;border-radius:17px;display:grid;place-items:center;font-size:27px;background:linear-gradient(145deg,#282830,#111116);box-shadow:inset 0 1px #fff2,0 8px 18px #0005}.icon small{font-size:11px;color:#eee}
+.dock{margin-top:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:13px;padding:11px;border-radius:25px;background:#ffffff18;backdrop-filter:blur(24px);border:1px solid #fff1}
+.app{position:absolute;z-index:15;inset:0;display:none;background:#08080c}.app.open{display:block}.appbar{height:72px;padding:31px 17px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:#0a0a0eec;backdrop-filter:blur(20px)}.appbar h2{font-size:19px;margin:0}.back{background:#19191f;border-radius:12px;padding:7px 11px;color:#ddd}.appbody{height:calc(100% - 72px);overflow:auto;padding:15px}
+.list{display:flex;flex-direction:column;gap:9px}.row{padding:13px;border:1px solid var(--line);background:var(--card);border-radius:17px;display:flex;gap:12px;align-items:center}.avatar{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#4f8cff,#a35bff);font-weight:800}.row .grow{flex:1}.muted{color:var(--muted);font-size:12px}.bubble{max-width:82%;padding:11px 13px;border-radius:18px;background:#202027;margin:7px 0}.bubble.me{margin-left:auto;background:#1877f2}.messages{display:flex;flex-direction:column}.compose{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:8px;padding:8px;background:#111116dd;backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:18px}.compose input{min-width:0;flex:1;background:#202027;border:0;border-radius:13px;padding:10px 12px;color:white;outline:none}.send,.primary{background:#fff;color:#09090b;padding:10px 13px;border-radius:13px;font-weight:700}.image{width:100%;max-height:300px;object-fit:cover;border-radius:15px;margin-top:7px}.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.gallery img{width:100%;aspect-ratio:1;border-radius:12px;object-fit:cover}.empty{padding:35px 15px;text-align:center;color:var(--muted)}.cards{display:grid;gap:10px}.setting{padding:15px;border:1px solid var(--line);background:var(--card);border-radius:17px;display:flex;justify-content:space-between;align-items:center}.pill{font-size:11px;padding:5px 8px;border-radius:99px;background:#35d07f22;color:#6ff1a7}.upload{border:1px dashed #444;padding:20px;border-radius:18px;text-align:center;margin-bottom:12px}.upload input{width:100%;margin-top:10px}.founder{position:absolute;z-index:50;inset:0;background:#08080c;display:none}.founder.open{display:block}.founder header{padding:40px 18px 15px;border-bottom:1px solid var(--line)}.founder h1{margin:0;font-size:23px}.founder .panel{margin:15px;padding:15px;border:1px solid var(--line);border-radius:18px;background:var(--card)}.founder textarea,.founder input{width:100%;background:#18181f;border:1px solid #303039;color:#fff;border-radius:12px;padding:10px;outline:none;margin:7px 0}.toast{position:absolute;z-index:100;left:50%;bottom:20px;transform:translate(-50%,20px);background:#f5f5f5;color:#09090b;padding:10px 14px;border-radius:14px;font-weight:700;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+ <div class="screen">
+  <div class="wall"></div><div class="island"></div>
+  <div class="status"><span id="statusTime">9:41</span><span class="right"><span>◔</span><span>⌁</span><span>▰</span></span></div>
+  <section class="lock" id="lock"><div><div class="time" id="lockTime">9:41</div><div class="date" id="lockDate"></div></div><div class="unlock"></div></section>
+  <main class="home hidden" id="home">
+   <div class="greeting">SunsetPhone · utilisateur</div>
+   <div class="grid">
+    <button class="icon" data-app="messages"><span class="pic">💬</span><small>Messages</small></button>
+    <button class="icon" data-app="photos"><span class="pic">🌈</span><small>Photos</small></button>
+    <button class="icon" data-app="phone"><span class="pic">☎</span><small>Téléphone</small></button>
+    <button class="icon" data-app="contacts"><span class="pic">👤</span><small>Contacts</small></button>
+    <button class="icon" data-app="notifications"><span class="pic">🔔</span><small>Alertes</small></button>
+    <button class="icon" data-app="settings"><span class="pic">⚙</span><small>Réglages</small></button>
+   </div>
+   <div class="dock">
+    <button class="icon" data-app="messages"><span class="pic">💬</span><small></small></button>
+    <button class="icon" data-app="phone"><span class="pic">☎</span><small></small></button>
+    <button class="icon" data-app="photos"><span class="pic">🌈</span><small></small></button>
+    <button class="icon" data-app="settings"><span class="pic">⚙</span><small></small></button>
+   </div>
+  </main>
+  <section class="app" id="messages"><div class="appbar"><button class="back">‹</button><h2>Messages</h2><span>✎</span></div><div class="appbody"><div id="messageList" class="messages"></div></div><div class="compose"><input id="messageInput" placeholder="Message…"><button class="send" id="sendMessage">Envoyer</button></div></section>
+  <section class="app" id="photos"><div class="appbar"><button class="back">‹</button><h2>Photos</h2><label class="primary">＋ <input id="photoInput" type="file" accept="image/*" multiple hidden></label></div><div class="appbody"><div id="gallery" class="gallery"></div><div id="galleryEmpty" class="empty">Aucune image. Ajoute une photo pour commencer.</div></div></section>
+  <section class="app" id="phoneApp"><div class="appbar"><button class="back">‹</button><h2>Téléphone</h2><span>⌕</span></div><div class="appbody"><div class="cards"><div class="row"><div class="avatar">☎</div><div class="grow"><b>Clavier</b><div class="muted">Appels utilisateur</div></div></div><div class="row"><div class="avatar">★</div><div class="grow"><b>Favoris</b><div class="muted">Aucun favori</div></div></div></div></div></section>
+  <section class="app" id="contacts"><div class="appbar"><button class="back">‹</button><h2>Contacts</h2><span>＋</span></div><div class="appbody"><div class="empty">Les contacts de ton compte apparaîtront ici.</div></div></section>
+  <section class="app" id="notifications"><div class="appbar"><button class="back">‹</button><h2>Notifications</h2><span>✓</span></div><div class="appbody"><div id="notificationList" class="list"></div></div></section>
+  <section class="app" id="settings"><div class="appbar"><button class="back">‹</button><h2>Réglages</h2><span>⚙</span></div><div class="appbody"><div class="list"><div class="setting"><span>Compte</span><span class="pill">Utilisateur</span></div><div class="setting"><span>Version du mod</span><span class="muted">0.1.0</span></div><div class="setting"><span>Synchronisation</span><span class="pill">Local / test</span></div><div class="setting"><span>Stockage média</span><span class="muted">Navigateur</span></div></div></div></section>
+  <section class="founder" id="founder">
+   <header><button class="back" id="closeFounder">‹ Utilisateur</button><h1>Founder Test</h1><div class="muted">Outils de test séparés du téléphone utilisateur.</div></header>
+   <div class="panel"><b>Message entrant</b><input id="testSender" value="Founder"><textarea id="testText" rows="3" placeholder="Texte reçu par l'utilisateur…"></textarea><button class="primary" id="injectMessage">Simuler la réception</button></div>
+   <div class="panel"><b>Image entrante</b><input id="testImage" type="file" accept="image/*"><button class="primary" id="injectImage">Envoyer l'image au téléphone</button></div>
+  </section>
+  <div class="toast" id="toast"></div>
+ </div>
+</div>
+<script>
+const KEY="sunsetphone-mod-v1";
+const state=JSON.parse(localStorage.getItem(KEY)||'{"messages":[],"photos":[],"notifications":[]}');
+const $=s=>document.querySelector(s);
+const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
+const toast=t=>{const e=$("#toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1800)};
+function clock(){const d=new Date(),t=d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});$("#statusTime").textContent=t;$("#lockTime").textContent=t;$("#lockDate").textContent=d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});}
+setInterval(clock,1000);clock();
+function openApp(id){document.querySelectorAll(".app").forEach(x=>x.classList.remove("open"));const e=id==="phone"?$("#phoneApp"):$("#"+id);if(e)e.classList.add("open");}
+function home(){document.querySelectorAll(".app").forEach(x=>x.classList.remove("open"))}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-app]");if(b)openApp(b.dataset.app);if(e.target.closest(".back")&&!e.target.closest("#founder"))home()});
+$("#lock").addEventListener("click",()=>{$("#lock").classList.add("hidden");$("#home").classList.remove("hidden")});
+function renderMessages(){const box=$("#messageList");box.innerHTML="";if(!state.messages.length){box.innerHTML='<div class="empty">Aucun message pour le moment.</div>';return}state.messages.forEach(m=>{const row=document.createElement("div");row.className="bubble "+(m.me?"me":"");if(m.image){row.innerHTML='<b>'+escapeHtml(m.sender||"Photo")+'</b><img class="image" src="'+m.image+'"><div class="muted">'+new Date(m.at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+"</div>"}else row.innerHTML='<b>'+escapeHtml(m.sender||"Utilisateur")+'</b><br>'+escapeHtml(m.text||"")+'<div class="muted">'+new Date(m.at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+"</div>";box.appendChild(row)});}
+function renderPhotos(){const g=$("#gallery");g.innerHTML="";state.photos.forEach(p=>{const i=document.createElement("img");i.src=p;g.appendChild(i)});$("#galleryEmpty").style.display=state.photos.length?"none":"block";}
+function renderNotifications(){const n=$("#notificationList");n.innerHTML=state.notifications.length?state.notifications.map(x=>'<div class="row"><div class="avatar">🔔</div><div class="grow"><b>'+escapeHtml(x.title)+'</b><div class="muted">'+escapeHtml(x.body)+'</div></div></div>').join(""):'<div class="empty">Aucune notification.</div>'}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+$("#sendMessage").onclick=()=>{const v=$("#messageInput").value.trim();if(!v)return;state.messages.push({sender:"Moi",text:v,me:true,at:Date.now()});$("#messageInput").value="";save();renderMessages()};
+$("#photoInput").onchange=async e=>{for(const f of e.target.files){if(!f.type.startsWith("image/"))continue;const url=await fileData(f);state.photos.unshift(url);state.messages.push({sender:"Moi",image:url,me:true,at:Date.now()})}save();renderPhotos();renderMessages();toast("Photo ajoutée")};
+function fileData(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})}
+function incoming(sender,text,image){const m={sender,text,image,me:false,at:Date.now()};state.messages.push(m);if(image)state.photos.unshift(image);state.notifications.unshift({title:"Nouveau message",body:image?"Image reçue de "+sender:sender+" : "+text});save();renderMessages();renderPhotos();renderNotifications();toast("Nouveau message reçu");}
+$("#injectMessage").onclick=()=>{const sender=$("#testSender").value.trim()||"Founder";const text=$("#testText").value.trim();if(!text)return;incoming(sender,text,null);$("#testText").value=""};
+$("#injectImage").onclick=async()=>{const f=$("#testImage").files[0];if(!f)return;incoming($("#testSender").value.trim()||"Founder","",await fileData(f));$("#testImage").value=""};
+$("#closeFounder").onclick=()=>$("#founder").classList.remove("open");
+window.addEventListener("hashchange",()=>{$("#founder").classList.toggle("open",location.hash==="#founder-test")});
+$("#founder").classList.toggle("open",location.hash==="#founder-test");
+renderMessages();renderPhotos();renderNotifications();
+</script>
+</body>
+</html>
