@@ -126,7 +126,7 @@ function modApplySync(d){
   if(d.number)state.me={...(state.me||{}),number:d.number};
   if(d.me)state.me=d.me;
   if(Array.isArray(d.contacts))state.contacts=d.contacts;
-  if(d.convs&&typeof d.convs==="object"&&d.convs.list)state.messages=Object.values(d.convs.list).flat();
+  if(d.convs&&typeof d.convs==="object"&&d.convs.list)state.messages=Object.values(d.convs.list).flat().map(m=>({sender:m.from,text:m.text,image:m.image,me:m.from===state.me?.number,at:(m.time||Date.now()/1000)*1000}));
   if(d.names)state.names=d.names;
   modSyncStatus("live",state.me?.name,state.me?.number);
   renderMessages();renderContacts();renderNotifications();renderPhotos();renderHomeSync();
