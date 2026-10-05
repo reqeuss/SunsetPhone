@@ -1,0 +1,23 @@
+{
+  "id": "sunsetphone-user-mod",
+  "name": "SunsetPhone Mod",
+  "version": "0.1.0",
+  "type": "user-overlay",
+  "entry": "index.html",
+  "founderTest": {
+    "enabled": true,
+    "route": "#founder-test",
+    "visibleToUsers": false
+  },
+  "capabilities": [
+    "messages",
+    "image-upload",
+    "image-receive-test",
+    "gallery",
+    "notifications"
+  ],
+  "storage": {
+    "mode": "browser-test",
+    "backend": "ready-for-realtime"
+  }
+}
