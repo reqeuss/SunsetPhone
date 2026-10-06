@@ -42,7 +42,7 @@ button,input{font:inherit}button{border:0;color:inherit;cursor:pointer}
   <div class="status"><span id="statusTime">9:41</span><span class="right"><span>◔</span><span>⌁</span><span>▰</span></span></div>
   <section class="lock" id="lock"><div><div class="time" id="lockTime">9:41</div><div class="date" id="lockDate"></div></div><div class="unlock"></div></section>
   <main class="home hidden" id="home">
-   <div class="greeting">SunsetPhone · utilisateur <span id="syncState" class="pill">Hors ligne</span></div>
+   <div class="greeting">SunsetPhone · utilisateur <span id="syncState" class="pill">Hors ligne</span> <button id="allAppsBtn" class="pill" type="button">Toutes les apps</button></div>
    <div class="grid">
     <button class="icon" data-app="messages"><span class="pic">💬</span><small>Messages</small></button>
     <button class="icon" data-app="photos"><span class="pic">🌈</span><small>Photos</small></button>
@@ -79,7 +79,8 @@ button,input{font:inherit}button{border:0;color:inherit;cursor:pointer}
   <section class="app" id="contacts"><div class="appbar"><button class="back">‹</button><h2>Contacts</h2><span>＋</span></div><div class="appbody"><div id="contactList" class="list"><div class="empty">Aucun contact synchronisé.</div></div></div></section>
   <section class="app" id="notifications"><div class="appbar"><button class="back">‹</button><h2>Notifications</h2><span>✓</span></div><div class="appbody"><div id="notificationList" class="list"></div></div></section>
   <section class="app" id="settings"><div class="appbar"><button class="back">‹</button><h2>Réglages</h2><span>⚙</span></div><div class="appbody"><div class="list"><div class="setting"><span>Compte</span><span id="accountName" class="pill">Utilisateur</span></div><div class="setting"><span>Numéro</span><span id="accountNumber" class="muted">Non synchronisé</span></div><div class="setting"><span>Version du mod</span><span class="muted">0.2.0</span></div><div class="setting"><span>Synchronisation</span><span id="settingsSync" class="pill">Local</span></div><button class="primary" id="requestSync">Synchroniser maintenant</button></div></div></section>
-<section class="app" id="genericApp"><div class="appbar"><button class="back">‹</button><h2 id="genericTitle">App</h2><span>•••</span></div><div class="appbody"><div id="genericBody" class="empty">Données fournies par le site lorsqu'une synchronisation est disponible.</div></div></section>
+<section class="app" id="allApps"><div class="appbar"><button class="back">‹</button><h2>Toutes les apps</h2><span id="officialAppCount">0</span></div><div class="appbody"><div id="allAppsList" class="list"></div><div class="empty" id="allAppsEmpty">Les apps officielles apparaîtront ici après synchronisation.</div></div></section>
+  <section class="app" id="genericApp"><div class="appbar"><button class="back">‹</button><h2 id="genericTitle">App</h2><span>•••</span></div><div class="appbody"><div id="genericBody" class="empty">Données fournies par le site lorsqu'une synchronisation est disponible.</div></div></section>
   <section class="founder" id="founder">
    <header><button class="back" id="closeFounder">‹ Utilisateur</button><h1>Founder Test</h1><div class="muted">Outils de test séparés du téléphone utilisateur.</div></header>
    <div class="panel"><b>Message entrant</b><input id="testSender" value="Founder"><textarea id="testText" rows="3" placeholder="Texte reçu par l'utilisateur…"></textarea><button class="primary" id="injectMessage">Simuler la réception</button></div>
@@ -105,7 +106,14 @@ const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
 const toast=t=>{const e=$("#toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1800)};
 function clock(){const d=new Date(),t=d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});$("#statusTime").textContent=t;$("#lockTime").textContent=t;$("#lockDate").textContent=d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});}
 setInterval(clock,1000);clock();
-function openApp(id){document.querySelectorAll(".app").forEach(x=>x.classList.remove("open"));const e=id==="phone"?$("#phoneApp"):$("#"+id);if(e)e.classList.add("open");}
+function openApp(id){
+  document.querySelectorAll(".app").forEach(x=>x.classList.remove("open"));
+  if(id==="allApps"){renderAllApps();$("#allApps").classList.add("open");return;}
+  const e=id==="phone"?$("#phoneApp"):$("#"+id);
+  if(e){e.classList.add("open");return;}
+  const known=(state.apps||[]).find(a=>String(a.id)===String(id));
+  if(known){modAction("RunApp",{id:known.id});return;}
+}
 function home(){document.querySelectorAll(".app").forEach(x=>x.classList.remove("open"))}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-app]");if(b)openApp(b.dataset.app);if(e.target.closest(".back")&&!e.target.closest("#founder"))home()});
 $("#lock").addEventListener("click",()=>{$("#lock").classList.add("hidden");$("#home").classList.remove("hidden")});
@@ -116,6 +124,14 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":
 $("#sendMessage").onclick=()=>{const v=$("#messageInput").value.trim();if(!v)return;state.messages.push({sender:"Moi",text:v,me:true,at:Date.now()});$("#messageInput").value="";save();renderMessages()};
 $("#photoInput").onchange=async e=>{for(const f of e.target.files){if(!f.type.startsWith("image/"))continue;const url=await fileData(f);state.photos.unshift(url);state.messages.push({sender:"Moi",image:url,me:true,at:Date.now()})}save();renderPhotos();renderMessages();toast("Photo ajoutée")};
 function fileData(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})}
+function renderAllApps(){
+  const list=$("#allAppsList"), empty=$("#allAppsEmpty"), count=$("#officialAppCount");
+  const apps=Array.isArray(state.apps)?state.apps.filter(a=>!a.hidden):[];
+  if(count)count.textContent=String(apps.length);
+  if(!list)return;
+  list.innerHTML=apps.map(a=>'<div class="row" data-run-app="'+escapeHtml(a.id)+'"><div class="avatar">'+escapeHtml((a.name||a.id||"?").slice(0,1).toUpperCase())+'</div><div class="grow"><b>'+escapeHtml(a.name||a.id)+'</b><div class="muted">'+escapeHtml(a.kind||"application")+'</div></div><span class="pill">Ouvrir</span></div>').join("");
+  if(empty)empty.style.display=apps.length?"none":"block";
+}
 function renderHomeSync(){
   const s=$("#syncState"); if(s){s.textContent=state.sync?.mode==="live"?"● Synchronisé":state.sync?.mode==="bridge"?"● Site connecté":"Hors ligne";}
   if($("#accountName"))$("#accountName").textContent=state.me?.name||"Utilisateur";
@@ -141,6 +157,7 @@ function modSyncStatus(mode,name,number){
 }
 function modApplySync(d){
   if(!d||typeof d!=="object")return;
+  if(Array.isArray(d.apps))state.apps=d.apps;
   if(d.number)state.me={...(state.me||{}),number:d.number};
   if(d.me)state.me=d.me;
   if(Array.isArray(d.contacts))state.contacts=d.contacts;
@@ -155,7 +172,7 @@ function sendHello(){
   try{window.parent?.postMessage(msg,"*");}catch(e){}
 }
 function modAction(action,data){
-  try{if(window.gmod){if(action==="SendSMS"&&gmod.SendSMS)gmod.SendSMS(data.number,data.text);else if(action==="Call"&&gmod.Call)gmod.Call(data.number);else if(action==="AddContact"&&gmod.AddContact)gmod.AddContact(data.number,data.name);else if(action==="Sync"&&gmod.Sync)gmod.Sync();}}catch(e){}
+  try{if(window.gmod){if(action==="SendSMS"&&gmod.SendSMS)gmod.SendSMS(data.number,data.text);else if(action==="Call"&&gmod.Call)gmod.Call(data.number);else if(action==="AddContact"&&gmod.AddContact)gmod.AddContact(data.number,data.name);else if(action==="RunApp"&&gmod.RunApp)gmod.RunApp(data.id);else if(action==="Sync"&&gmod.Sync)gmod.Sync();}}catch(e){}
   try{if(window.parent&&window.parent!==window)window.parent.postMessage({source:"sunsetphone-mod",type:"phone-action",action,data},"*")}catch(e){}
 }
 function installModBridge(){
@@ -185,6 +202,8 @@ window.addEventListener("message",e=>{
     return;
   }
   if(d.source!=="sunsetgames")return;if(d.type==="phone-sync"||d.type==="sync")modApplySync(d.payload||d.data||{});if(d.type==="phone-message")incoming((d.message||d.payload)?.from||"Site",(d.message||d.payload)?.text||"",(d.message||d.payload)?.image);if(d.type==="phone-photo"&&d.photo){state.photos.unshift(d.photo);save();renderPhotos()}if(d.type==="founder-mode")$("#founder").classList.toggle("open",!!d.enabled)});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-run-app]");if(b){modAction("RunApp",{id:b.dataset.runApp});toast("Ouverture de "+b.dataset.runApp)}});
+$("#allAppsBtn").onclick=()=>openApp("allApps");
 $("#requestSync").onclick=()=>{modAction("Sync",{reason:"user"});try{window.parent?.postMessage({source:"sunsetphone-mod",type:"phone-sync-request"},"*")}catch(e){}toast("Synchronisation demandée")};
 installModBridge();
 sendHello();
@@ -194,7 +213,7 @@ $("#injectImage").onclick=async()=>{const f=$("#testImage").files[0];if(!f)retur
 $("#closeFounder").onclick=()=>$("#founder").classList.remove("open");
 window.addEventListener("hashchange",()=>{$("#founder").classList.toggle("open",location.hash==="#founder-test")});
 $("#founder").classList.toggle("open",location.hash==="#founder-test");
-renderMessages();renderPhotos();renderNotifications();renderContacts();renderHomeSync();
+renderMessages();renderPhotos();renderNotifications();renderContacts();renderHomeSync();renderAllApps();
 </script>
 </body>
 </html>
