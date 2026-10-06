@@ -1,7 +1,7 @@
 {
   "id": "sunsetphone-user-mod",
   "name": "SunsetPhone Mod",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "user-overlay",
   "entry": "index.html",
   "founderTest": {
@@ -16,10 +16,12 @@
     "site-bridge",
     "realtime-sync",
     "gallery",
-    "notifications"
+    "notifications",
+    "official-iframe",
+    "handshake"
   ],
   "storage": {
-    "mode": "browser-test",
-    "backend": "site-bridge-ready"
+    "mode": "browser-cache",
+    "backend": "official-site-bridge"
   }
 }
