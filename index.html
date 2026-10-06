@@ -35,6 +35,8 @@ button,input{font:inherit}button{border:0;color:inherit;cursor:pointer}
 </head>
 <body>
 <div class="phone" id="phone">
+ <iframe id="officialPhone" class="official-phone" src="https://sunsetgames.fr/telephone/" title="SunsetGames official telephone" loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+ <div class="official-shield"><span id="officialStatus">SITE EN ARRIÈRE-PLAN</span><button id="toggleOfficial" type="button">Masquer le site</button></div>
  <div class="screen">
   <div class="wall"></div><div class="island"></div>
   <div class="status"><span id="statusTime">9:41</span><span class="right"><span>◔</span><span>⌁</span><span>▰</span></span></div>
@@ -94,9 +96,10 @@ const $=s=>document.querySelector(s);
 const phoneRoot=document.querySelector(".phone");
 const officialFrame=$("#officialPhone");
 const officialStatus=$("#officialStatus");
-$("#toggleOfficial").onclick=()=>{phoneRoot.classList.toggle("official-hidden");$("#toggleOfficial").textContent=phoneRoot.classList.contains("official-hidden")?"Afficher le site":"Masquer le site"};
-officialFrame.addEventListener("load",()=>{officialStatus.textContent="SITE CONNECTÉ";});
-officialFrame.addEventListener("error",()=>{officialStatus.textContent="SITE INDISPONIBLE";});
+const toggleOfficial=$("#toggleOfficial");
+if(toggleOfficial)toggleOfficial.onclick=()=>{phoneRoot.classList.toggle("official-hidden");toggleOfficial.textContent=phoneRoot.classList.contains("official-hidden")?"Afficher le site":"Masquer le site"};
+if(officialFrame)officialFrame.addEventListener("load",()=>{if(officialStatus)officialStatus.textContent="SITE CHARGÉ · BRIDGE EN ATTENTE";sendHello();});
+if(officialFrame)officialFrame.addEventListener("error",()=>{if(officialStatus)officialStatus.textContent="SITE INDISPONIBLE · MODE LOCAL";});
 
 const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
 const toast=t=>{const e=$("#toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1800)};
@@ -146,6 +149,11 @@ function modApplySync(d){
   modSyncStatus("live",state.me?.name,state.me?.number);
   renderMessages();renderContacts();renderNotifications();renderPhotos();renderHomeSync();
 }
+function sendHello(){
+  const msg={source:"sunsetphone-mod",type:"hello",version:"0.3.0",capabilities:["sync","sms","contacts","photos","calls"]};
+  try{if(officialFrame?.contentWindow)officialFrame.contentWindow.postMessage(msg,"https://sunsetgames.fr");}catch(e){}
+  try{window.parent?.postMessage(msg,"*");}catch(e){}
+}
 function modAction(action,data){
   try{if(window.gmod){if(action==="SendSMS"&&gmod.SendSMS)gmod.SendSMS(data.number,data.text);else if(action==="Call"&&gmod.Call)gmod.Call(data.number);else if(action==="AddContact"&&gmod.AddContact)gmod.AddContact(data.number,data.name);else if(action==="Sync"&&gmod.Sync)gmod.Sync();}}catch(e){}
   try{if(window.parent&&window.parent!==window)window.parent.postMessage({source:"sunsetphone-mod",type:"phone-action",action,data},"*")}catch(e){}
@@ -164,10 +172,23 @@ function installModBridge(){
     modSyncStatus("bridge",state.me?.name,state.me?.number);
   }
 }
-window.SunsetPhoneMod={version:"0.2.0",applySync:modApplySync,founder:(on)=>$("#founder").classList.toggle("open",!!on)};
-window.addEventListener("message",e=>{const d=e.data;if(!d||d.source!=="sunsetgames")return;if(d.type==="phone-sync"||d.type==="sync")modApplySync(d.payload||d.data||{});if(d.type==="phone-message")incoming((d.message||d.payload)?.from||"Site",(d.message||d.payload)?.text||"",(d.message||d.payload)?.image);if(d.type==="phone-photo"&&d.photo){state.photos.unshift(d.photo);save();renderPhotos()}if(d.type==="founder-mode")$("#founder").classList.toggle("open",!!d.enabled)});
+window.SunsetPhoneMod={version:"0.3.0",applySync:modApplySync,founder:(on)=>$("#founder").classList.toggle("open",!!on)};
+window.addEventListener("message",e=>{
+  const d=e.data;
+  if(!d||typeof d!=="object")return;
+  if(e.origin==="https://sunsetgames.fr"&&d.source==="sunsetgames"){
+    if(d.type==="phone-sync"||d.type==="sync")modApplySync(d.payload||d.data||{});
+    if(d.type==="phone-message")incoming((d.message||d.payload)?.from||"Site",(d.message||d.payload)?.text||"",(d.message||d.payload)?.image);
+    if(d.type==="phone-photo"&&d.photo){state.photos.unshift(d.photo);save();renderPhotos();}
+    if(d.type==="founder-mode")$("#founder").classList.toggle("open",!!d.enabled);
+    if(d.type==="hello-ack"&&officialStatus)officialStatus.textContent="SITE CONNECTÉ · SYNCHRO PRÊTE";
+    return;
+  }
+  if(d.source!=="sunsetgames")return;if(d.type==="phone-sync"||d.type==="sync")modApplySync(d.payload||d.data||{});if(d.type==="phone-message")incoming((d.message||d.payload)?.from||"Site",(d.message||d.payload)?.text||"",(d.message||d.payload)?.image);if(d.type==="phone-photo"&&d.photo){state.photos.unshift(d.photo);save();renderPhotos()}if(d.type==="founder-mode")$("#founder").classList.toggle("open",!!d.enabled)});
 $("#requestSync").onclick=()=>{modAction("Sync",{reason:"user"});try{window.parent?.postMessage({source:"sunsetphone-mod",type:"phone-sync-request"},"*")}catch(e){}toast("Synchronisation demandée")};
 installModBridge();
+sendHello();
+setInterval(sendHello,15000);
 $("#injectMessage").onclick=()=>{const sender=$("#testSender").value.trim()||"Founder";const text=$("#testText").value.trim();if(!text)return;incoming(sender,text,null);$("#testText").value=""};
 $("#injectImage").onclick=async()=>{const f=$("#testImage").files[0];if(!f)return;incoming($("#testSender").value.trim()||"Founder","",await fileData(f));$("#testImage").value=""};
 $("#closeFounder").onclick=()=>$("#founder").classList.remove("open");
