@@ -24,6 +24,13 @@ button,input{font:inherit}button{border:0;color:inherit;cursor:pointer}
 .dock{margin-top:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:13px;padding:11px;border-radius:25px;background:#ffffff18;backdrop-filter:blur(24px);border:1px solid #fff1}
 .app{position:absolute;z-index:15;inset:0;display:none;background:#08080c}.app.open{display:block}.appbar{height:72px;padding:31px 17px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:#0a0a0eec;backdrop-filter:blur(20px)}.appbar h2{font-size:19px;margin:0}.back{background:#19191f;border-radius:12px;padding:7px 11px;color:#ddd}.appbody{height:calc(100% - 72px);overflow:auto;padding:15px}
 .list{display:flex;flex-direction:column;gap:9px}.row{padding:13px;border:1px solid var(--line);background:var(--card);border-radius:17px;display:flex;gap:12px;align-items:center}.avatar{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#4f8cff,#a35bff);font-weight:800}.row .grow{flex:1}.muted{color:var(--muted);font-size:12px}.bubble{max-width:82%;padding:11px 13px;border-radius:18px;background:#202027;margin:7px 0}.bubble.me{margin-left:auto;background:#1877f2}.messages{display:flex;flex-direction:column}.compose{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:8px;padding:8px;background:#111116dd;backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:18px}.compose input{min-width:0;flex:1;background:#202027;border:0;border-radius:13px;padding:10px 12px;color:white;outline:none}.send,.primary{background:#fff;color:#09090b;padding:10px 13px;border-radius:13px;font-weight:700}.image{width:100%;max-height:300px;object-fit:cover;border-radius:15px;margin-top:7px}.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.gallery img{width:100%;aspect-ratio:1;border-radius:12px;object-fit:cover}.empty{padding:35px 15px;text-align:center;color:var(--muted)}.cards{display:grid;gap:10px}.setting{padding:15px;border:1px solid var(--line);background:var(--card);border-radius:17px;display:flex;justify-content:space-between;align-items:center}.pill{font-size:11px;padding:5px 8px;border-radius:99px;background:#35d07f22;color:#6ff1a7}.upload{border:1px dashed #444;padding:20px;border-radius:18px;text-align:center;margin-bottom:12px}.upload input{width:100%;margin-top:10px}.founder{position:absolute;z-index:50;inset:0;background:#08080c;display:none}.founder.open{display:block}.founder header{padding:40px 18px 15px;border-bottom:1px solid var(--line)}.founder h1{margin:0;font-size:23px}.founder .panel{margin:15px;padding:15px;border:1px solid var(--line);border-radius:18px;background:var(--card)}.founder textarea,.founder input{width:100%;background:#18181f;border:1px solid #303039;color:#fff;border-radius:12px;padding:10px;outline:none;margin:7px 0}.toast{position:absolute;z-index:100;left:50%;bottom:20px;transform:translate(-50%,20px);background:#f5f5f5;color:#09090b;padding:10px 14px;border-radius:14px;font-weight:700;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.official-phone{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:1;background:#050507}
+.screen{z-index:2}
+.official-shield{position:absolute;z-index:80;top:42px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:999px;background:#050507d9;border:1px solid #ffffff20;backdrop-filter:blur(16px);font-size:9px;color:#aaa}
+.official-shield button{padding:5px 8px;border-radius:999px;background:#1a1a20;color:#fff;font-size:9px}
+.phone.official-hidden .official-phone{display:none}
+.phone.official-hidden .official-shield{display:none}
 </style>
 </head>
 <body>
@@ -80,9 +87,17 @@ button,input{font:inherit}button{border:0;color:inherit;cursor:pointer}
  </div>
 </div>
 <script>
+const OFFICIAL_URL="https://sunsetgames.fr/telephone/";
 const KEY="sunsetphone-mod-v1";
 const state=JSON.parse(localStorage.getItem(KEY)||'{"messages":[],"photos":[],"notifications":[]}');
 const $=s=>document.querySelector(s);
+const phoneRoot=document.querySelector(".phone");
+const officialFrame=$("#officialPhone");
+const officialStatus=$("#officialStatus");
+$("#toggleOfficial").onclick=()=>{phoneRoot.classList.toggle("official-hidden");$("#toggleOfficial").textContent=phoneRoot.classList.contains("official-hidden")?"Afficher le site":"Masquer le site"};
+officialFrame.addEventListener("load",()=>{officialStatus.textContent="SITE CONNECTÉ";});
+officialFrame.addEventListener("error",()=>{officialStatus.textContent="SITE INDISPONIBLE";});
+
 const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
 const toast=t=>{const e=$("#toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1800)};
 function clock(){const d=new Date(),t=d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});$("#statusTime").textContent=t;$("#lockTime").textContent=t;$("#lockDate").textContent=d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});}
