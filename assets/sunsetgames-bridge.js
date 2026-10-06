@@ -68,6 +68,7 @@
       if(a==="SendSMS" && typeof gmod.SendSMS==="function") gmod.SendSMS(x.number,x.text);
       if(a==="Call" && typeof gmod.Call==="function") gmod.Call(x.number);
       if(a==="AddContact" && typeof gmod.AddContact==="function") gmod.AddContact(x.number,x.name);
+      if(a==="RunApp" && typeof gmod.RunApp==="function") gmod.RunApp(x.id);
       if(a==="RemoveContact" && typeof gmod.RemoveContact==="function") gmod.RemoveContact(x.number);
       if(a==="Sync" && typeof gmod.Sync==="function") gmod.Sync();
       publishSnapshot();
